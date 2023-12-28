@@ -1,0 +1,35 @@
+{
+  "name": "Subspace",
+  "namemsg": "subspace-extensionname",
+  "version": "1.0.0",
+  "author": "Clay Salvage",
+  "url": "https://meta.wongery.org/wiki/Extension:Subspace",
+  "descriptionmsg": "subspace-desc",
+  "license-name": "GPL-2.0-or-later",
+  "type": "other",
+  "manifest_version": 2,
+  "requires": {
+    "MediaWiki": ">= 1.38.0"
+  },
+  "AutoloadNamespaces": {
+    "MediaWiki\\Extension\\Subspace\\": "src/"
+  },
+  "HookHandlers": {
+    "SubspaceHookHandler": {
+      "class": "MediaWiki\\Extension\\Subspace\\SubspaceHookHandler"
+    }
+  },
+  "Hooks": {
+    "ArticleFromTitle": "SubspaceHookHandler"
+  },
+  "ResourceModules": {
+    "ext.subspace": {
+      "localBasePath": "modules/ext.subspace",
+      "remoteExtPath": "Subspace/modules/ext.subspace",
+      "dependencies": [],
+      "styles": [],
+      "packageFiles": ["init.js"],
+      "messages": []
+    }
+  }
+}
