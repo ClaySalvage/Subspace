@@ -14,7 +14,15 @@ class SubspaceHookHandler implements \MediaWiki\Page\Hook\ArticleFromTitleHook, 
 {
 	public function onArticleFromTitle($title, &$article, $context)
 	{
-		// var_dump($article);
+		// var_dump($title);
+		// var_dump($title->getBaseText());
+		$services = MediaWikiServices::getInstance();
+		$namespaceInfo = $services->getNameSpaceInfo();
+		if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $title)))) !== null) {
+			$newTitle = Title::makeTitle($ns, "Main Page");
+			$article = new Article($newTitle);
+			return false;
+		}
 		if ($title->mArticleID !== -1) return true;
 		if (!str_contains($title->getBaseText(), ":")) return true;
 		// var_dump($title->getBaseText());
@@ -22,6 +30,17 @@ class SubspaceHookHandler implements \MediaWiki\Page\Hook\ArticleFromTitleHook, 
 		// var_dump($title->getLocalURL());
 		// var_dump($title->getPrefixedDBKey());
 		// var_dump($title);
+
+		// This doesn't work, because if it ends with a colon this hook never even gets called...
+		if (substr($title, -1) === ':') {
+			$namespace = substr($title, 0, -1);
+			if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $namespace)))) === null)
+				return true;
+			$newTitle = Title::makeTitle($ns, "Main Page");
+			$article = new Article($newTitle);
+			return false;
+		}
+
 		$explodedTitle = explode('#', $title->getFullText(), 2);
 		$explodedTitle2 = explode('/', $explodedTitle[0], 2);
 		$baseTitle = $explodedTitle2[0];
@@ -32,8 +51,6 @@ class SubspaceHookHandler implements \MediaWiki\Page\Hook\ArticleFromTitleHook, 
 		// var_dump($titleParts);
 
 
-		$services = MediaWikiServices::getInstance();
-		$namespaceInfo = $services->getNameSpaceInfo();
 		// echo "============================\n";
 		// var_dump($context);
 		for ($i = count($titleParts) - 1; $i > 0; $i--) {
@@ -60,8 +77,26 @@ class SubspaceHookHandler implements \MediaWiki\Page\Hook\ArticleFromTitleHook, 
 
 	public function onWikiPageFactory($title, &$page)
 	{
+		$services = MediaWikiServices::getInstance();
+		$namespaceInfo = $services->getNameSpaceInfo();
+		if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $title)))) !== null) {
+			$newTitle = Title::makeTitle($ns, "Main Page");
+			$page = new WikiPage($newTitle);
+			return false;
+		}
 		if ($title->mArticleID !== -1) return true;
 		if (!str_contains($title->getBaseText(), ":")) return true;
+
+
+		if (substr($title, -1) === ':') {
+			$namespace = substr($title, 0, -1);
+			if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $namespace)))) === null)
+				return true;
+			$newTitle = Title::makeTitle($ns, "Main Page");
+			$page = new WikiPage($newTitle);
+			return false;
+		}
+
 		$explodedTitle = explode('#', $title->getFullText(), 2);
 		$explodedTitle2 = explode('/', $explodedTitle[0], 2);
 		$baseTitle = $explodedTitle2[0];
@@ -69,9 +104,6 @@ class SubspaceHookHandler implements \MediaWiki\Page\Hook\ArticleFromTitleHook, 
 		$anchor = count($explodedTitle) > 1 ? $explodedTitle[1] : "";
 		$titleParts = explode(":", $baseTitle);
 
-
-		$services = MediaWikiServices::getInstance();
-		$namespaceInfo = $services->getNameSpaceInfo();
 		for ($i = count($titleParts) - 1; $i > 0; $i--) {
 			$namespace = implode(':', array_slice($titleParts, 0, $i));
 			if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $namespace)))) !== null) {
