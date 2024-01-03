@@ -7,115 +7,84 @@ use MediaWiki\MediaWikiServices;
 use NamespaceInfo;
 use Title;
 use Article;
+use IContextSource;
 use WikiPage;
 // use Wikimedia\Rdbms\Subquery;
 
-class SubspaceHookHandler implements \MediaWiki\Page\Hook\ArticleFromTitleHook, \MediaWiki\Page\Hook\WikiPageFactoryHook
+// global $kludgeVariable = "";
+
+class SubspaceHookHandler implements
+	\MediaWiki\Page\Hook\ArticleFromTitleHook,
+	\MediaWiki\Page\Hook\WikiPageFactoryHook,
+	\MediaWiki\Hook\TitleIsAlwaysKnownHook
 {
-	public function onArticleFromTitle($title, &$article, $context)
+	static function parseTitle($title)
 	{
-		// var_dump($title);
-		// var_dump($title->getBaseText());
 		$services = MediaWikiServices::getInstance();
 		$namespaceInfo = $services->getNameSpaceInfo();
-		if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $title)))) !== null) {
-			$newTitle = Title::makeTitle($ns, "Main Page");
-			$article = new Article($newTitle);
-			return false;
-		}
-		if ($title->mArticleID !== -1) return true;
-		if (!str_contains($title->getBaseText(), ":")) return true;
-		// var_dump($title->getBaseText());
-		// var_dump($title->getFullText());
-		// var_dump($title->getLocalURL());
-		// var_dump($title->getPrefixedDBKey());
-		// var_dump($title);
-
-		// This doesn't work, because if it ends with a colon this hook never even gets called...
-		if (substr($title, -1) === ':') {
-			$namespace = substr($title, 0, -1);
-			if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $namespace)))) === null)
-				return true;
-			$newTitle = Title::makeTitle($ns, "Main Page");
-			$article = new Article($newTitle);
-			return false;
-		}
-
+		if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $title)))) !== null)
+			return Title::makeTitle($ns, "Main Page");
+		if ($title->mArticleID > 0) return null;
+		if (!str_contains($title->getBaseText(), ":")) return null;
 		$explodedTitle = explode('#', $title->getFullText(), 2);
 		$explodedTitle2 = explode('/', $explodedTitle[0], 2);
 		$baseTitle = $explodedTitle2[0];
 		$subpage = count($explodedTitle2) > 1 ? $explodedTitle2[1] : "";
 		$anchor = count($explodedTitle) > 1 ? $explodedTitle[1] : "";
-		// echo ("//" . $baseTitle . "//" . $subpage . "//" . $anchor);
+
 		$titleParts = explode(":", $baseTitle);
-		// var_dump($titleParts);
-
-
-		// echo "============================\n";
-		// var_dump($context);
-		for ($i = count($titleParts) - 1; $i > 0; $i--) {
-			$namespace = implode(':', array_slice($titleParts, 0, $i));
-			// echo $namespace . "\n";
-			// echo $namespaceInfo->getCanonicalIndex(strtolower($namespace));
-			// echo $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $namespace)));
-			if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $namespace)))) !== null) {
-				// echo $ns;
-				$pageTitle = implode(':', array_slice($titleParts, $i));
-				// if ($subpage !== "") $pageTitle .= "/" . $subpage;
-				// echo "######" . $namespaceInfo->getCanonicalName($ns) . "#####" . $pageTitle . "######\n";
-				$newTitle = Title::makeTitle($ns, $pageTitle, $anchor);
-				// var_dump($newTitle);
-				// $newarticle = Article::newFromTitle($newTitle, $context);
-				$article = new Article($newTitle);
-				// var_dump($article);
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	public function onWikiPageFactory($title, &$page)
-	{
-		$services = MediaWikiServices::getInstance();
-		$namespaceInfo = $services->getNameSpaceInfo();
-		if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $title)))) !== null) {
-			$newTitle = Title::makeTitle($ns, "Main Page");
-			$page = new WikiPage($newTitle);
-			return false;
-		}
-		if ($title->mArticleID !== -1) return true;
-		if (!str_contains($title->getBaseText(), ":")) return true;
-
-
-		if (substr($title, -1) === ':') {
-			$namespace = substr($title, 0, -1);
-			if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $namespace)))) === null)
-				return true;
-			$newTitle = Title::makeTitle($ns, "Main Page");
-			$page = new WikiPage($newTitle);
-			return false;
-		}
-
-		$explodedTitle = explode('#', $title->getFullText(), 2);
-		$explodedTitle2 = explode('/', $explodedTitle[0], 2);
-		$baseTitle = $explodedTitle2[0];
-		$subpage = count($explodedTitle2) > 1 ? $explodedTitle2[1] : "";
-		$anchor = count($explodedTitle) > 1 ? $explodedTitle[1] : "";
-		$titleParts = explode(":", $baseTitle);
-
 		for ($i = count($titleParts) - 1; $i > 0; $i--) {
 			$namespace = implode(':', array_slice($titleParts, 0, $i));
 			if (($ns = $namespaceInfo->getCanonicalIndex(strtolower(str_replace(":", "_", $namespace)))) !== null) {
 				$pageTitle = implode(':', array_slice($titleParts, $i));
 				if ($subpage !== "") $pageTitle .= "/" . $subpage;
-				$newTitle = Title::makeTitle($ns, $pageTitle, $anchor);
-				$page = new WikiPage($newTitle);
-				// var_dump($page);
-				return false;
+				return Title::makeTitle($ns, $pageTitle, $anchor);
 			}
 		}
+		return null;
+	}
 
+	public function onArticleFromTitle($title, &$article, $context)
+	{
+		// var_dump($title);
+		$newTitle = (SubspaceHookHandler::parseTitle($title));
+		if ($newTitle === null) return true;
+		// var_dump($newTitle);
+		// var_dump($newTitle->exists());
+		$article = new Article($newTitle);
+		return false;
+	}
+
+	public function onWikiPageFactory($title, &$page)
+	{
+		// var_dump($title);
+		$newTitle = (SubspaceHookHandler::parseTitle($title));
+		// var_dump($newTitle);
+		if ($newTitle === null) return true;
+		// var_dump($newTitle);
+		// var_dump($newTitle->exists());
+		$page = new WikiPage($newTitle);
+		return false;
+	}
+
+	public function onTitleExists($title, &$exists)
+	{
+		// if (!str_contains($title->getFullText(), ":")) return true;
+		// if (!str_contains($title->getFullText(), "RPG")) return true;
+		var_dump($title);
+		var_dump($exists);
+		if ($exists) return true;
+		$newTitle = (SubspaceHookHandler::parseTitle($title));
+		if ($newTitle === null) return true;
+		$exists = $newTitle->exists();
+		return false;
+	}
+
+	public function onTitleIsAlwaysKnown($title, &$isKnown)
+	{
+		// echo $title;
+		$isKnown = (SubspaceHookHandler::parseTitle($title) !== null);
+		// echo $isKnown;
 		return true;
 	}
 }

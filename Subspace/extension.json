@@ -21,7 +21,8 @@
   },
   "Hooks": {
     "ArticleFromTitle": "SubspaceHookHandler",
-    "WikiPageFactory": "SubspaceHookHandler"
+    "WikiPageFactory": "SubspaceHookHandler",
+    "TitleIsAlwaysKnown": "SubspaceHookHandler"
   },
   "ResourceModules": {
     "ext.subspace": {
