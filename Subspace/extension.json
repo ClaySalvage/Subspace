@@ -1,7 +1,7 @@
 {
   "name": "Subspace",
   "namemsg": "subspace-extensionname",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Clay Salvage",
   "url": "https://meta.wongery.org/wiki/Extension:Subspace",
   "descriptionmsg": "subspace-desc",
@@ -10,6 +10,9 @@
   "manifest_version": 2,
   "requires": {
     "MediaWiki": ">= 1.38.0"
+  },
+  "MessagesDirs": {
+    "PluggableAuth": ["i18n"]
   },
   "AutoloadNamespaces": {
     "MediaWiki\\Extension\\Subspace\\": "src/"

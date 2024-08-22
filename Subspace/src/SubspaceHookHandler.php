@@ -71,8 +71,8 @@ class SubspaceHookHandler implements
 	{
 		// if (!str_contains($title->getFullText(), ":")) return true;
 		// if (!str_contains($title->getFullText(), "RPG")) return true;
-		var_dump($title);
-		var_dump($exists);
+		#var_dump($title);
+		#var_dump($exists);
 		if ($exists) return true;
 		$newTitle = (SubspaceHookHandler::parseTitle($title));
 		if ($newTitle === null) return true;
@@ -82,9 +82,10 @@ class SubspaceHookHandler implements
 
 	public function onTitleIsAlwaysKnown($title, &$isKnown)
 	{
-		// echo $title;
-		$isKnown = (SubspaceHookHandler::parseTitle($title) !== null);
-		// echo $isKnown;
+		//		var_dump($title);
+		//		echo $title->isExternal() ? "EXTERNAL" : "INTERNAL";
+		//		var_dump($isKnown);
+		$isKnown = $title->isExternal() || (SubspaceHookHandler::parseTitle($title) !== null);
 		return true;
 	}
 }

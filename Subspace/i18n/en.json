@@ -1,0 +1,7 @@
+{
+  "@metadata": {
+    "authors": ["Clay Salvage"]
+  },
+  "subspace-desc": "Implements MediaWiki \"subspaces\" within namespaces",
+  "subspace-extensionname": "Subspace"
+}
